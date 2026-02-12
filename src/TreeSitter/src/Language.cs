@@ -20,14 +20,16 @@ public class Language : IDisposable
         var symbolCount = Binding.ts_language_symbol_count(Ptr) + 1;
         Symbols = new string[symbolCount];
 
-        for (ushort i = 0; i < Symbols.Length; i++)
+        // HACK: On json, 25 was null
+        for (ushort i = 0; i < Symbols.Length -1; i++)
             Symbols[i] = Marshal.PtrToStringAnsi(Binding.ts_language_symbol_name(Ptr, i)) ?? throw new InvalidOperationException($"Wasn't expecting null symbol name for id {i}");
 
         var fieldCount = (int)Binding.ts_language_field_count(Ptr) + 1;
         Fields = new string[fieldCount + 1];
         FieldIds = new Dictionary<string, ushort>();
 
-        for (ushort i = 0; i < Fields.Length; i++)
+        // HACK: On json, 0 was null and 3 was null
+        for (ushort i = 1; i < Fields.Length -1; i++)
         {
             Fields[i] = Marshal.PtrToStringAnsi(Binding.ts_language_field_name_for_id(Ptr, i)) ?? throw new InvalidOperationException($"Wasn't expecting null field name for id {i}");
             if (Fields[i] != null)

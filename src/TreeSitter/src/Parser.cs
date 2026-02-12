@@ -34,14 +34,14 @@ public sealed class Parser : IDisposable
 
     public Range[] IncludedRanges() => Binding.ts_parser_included_ranges(Ptr, out _);
 
-    public Tree? ParseString(string source, Tree? oldTree = null)
+    public Tree ParseString(string source, Tree? oldTree = null)
     {
         if (Language is null)
             throw new InvalidOperationException("Language must be set before parsing.");
 
         var ptr = Binding.ts_parser_parse_string_encoding(Ptr, oldTree?.Ptr ?? IntPtr.Zero,
             source, (uint)source.Length * 2, InputEncoding.InputEncodingUTF16);
-        return ptr != IntPtr.Zero ? new Tree(ptr, Language) : null;
+        return ptr != IntPtr.Zero ? new Tree(ptr, Language) : throw new InvalidOperationException("Failed to parse the source into a tree.");
     }
 
     public void Reset() => Binding.ts_parser_reset(Ptr);

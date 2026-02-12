@@ -28,9 +28,9 @@ public sealed class Tree : IDisposable
         return new Tree(ptr, Language);
     }
 
-    public Node? RootNode()
+    public Node RootNode()
     {
-        return Node.FromNative(Binding.ts_tree_root_node(Ptr), this);
+        return Node.FromNative(Binding.ts_tree_root_node(Ptr), this) ?? throw new InvalidOperationException("Failed to get root node.");
     }
 
     public Node? RootNodeWithOffset(uint offsetBytes, Point offsetPoint) => Node.FromNative(Binding.ts_tree_root_node_with_offset(Ptr, offsetBytes, offsetPoint), this);
