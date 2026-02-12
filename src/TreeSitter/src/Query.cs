@@ -72,11 +72,11 @@ public sealed class Query : IDisposable
 
     public bool IsPatternGuaranteedAtOffset(uint offset) => Binding.ts_query_is_pattern_guaranteed_at_step(Ptr, offset / sizeof(ushort));
 
-    public string CaptureNameForId(uint id) => Marshal.PtrToStringAnsi(Binding.ts_query_capture_name_for_id(Ptr, id, out _));
+    public string? CaptureNameForId(uint id) => Marshal.PtrToStringAnsi(Binding.ts_query_capture_name_for_id(Ptr, id, out _));
 
     public Quantifier CaptureQuantifierForId(uint patternId, uint captureId) => Binding.ts_query_capture_quantifier_for_id(Ptr, patternId, captureId);
 
-    public string StringValueForId(uint id) => Marshal.PtrToStringAnsi(Binding.ts_query_string_value_for_id(Ptr, id, out _));
+    public string? StringValueForId(uint id) => Marshal.PtrToStringAnsi(Binding.ts_query_string_value_for_id(Ptr, id, out _));
 
     public void DisableCapture(string captureName) => Binding.ts_query_disable_capture(Ptr, captureName, (uint)captureName.Length);
 
@@ -103,10 +103,10 @@ public static class QueryUtils
         }
     }
 
-    public static QueryCapture ByIndex(this IEnumerable<QueryCapture> captures, uint index) =>
+    public static QueryCapture? ByIndex(this IEnumerable<QueryCapture> captures, uint index) =>
         captures.FirstOrDefault(x => x.Index == index);
 
-    public static QueryMatch ByIndex(this IEnumerable<QueryMatch> matches, uint index) =>
+    public static QueryMatch? ByIndex(this IEnumerable<QueryMatch> matches, uint index) =>
         matches.FirstOrDefault(x => x.Index == index);
 
     public static IEnumerable<Node> CapturedNodes(this Query query, Node node) =>

@@ -1,5 +1,3 @@
-using System;
-
 namespace TreeSitter;
 
 public sealed class TreeCursor : IDisposable

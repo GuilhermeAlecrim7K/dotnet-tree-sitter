@@ -25,30 +25,15 @@ public sealed class QueryCursor : IDisposable
         }
     }
 
-    public bool DidExceedMatchLimit()
-    {
-        return Binding.ts_query_cursor_did_exceed_match_limit(Ptr);
-    }
+    public bool DidExceedMatchLimit() => Binding.ts_query_cursor_did_exceed_match_limit(Ptr);
 
-    public uint MatchLimit()
-    {
-        return Binding.ts_query_cursor_match_limit(Ptr);
-    }
+    public uint MatchLimit() => Binding.ts_query_cursor_match_limit(Ptr);
 
-    public void SetMatchLimit(uint limit)
-    {
-        Binding.ts_query_cursor_set_match_limit(Ptr, limit);
-    }
+    public void SetMatchLimit(uint limit) => Binding.ts_query_cursor_set_match_limit(Ptr, limit);
 
-    public void SetRange(uint start, uint end)
-    {
-        Binding.ts_query_cursor_set_byte_range(Ptr, start * sizeof(ushort), end * sizeof(ushort));
-    }
+    public void SetRange(uint start, uint end) => Binding.ts_query_cursor_set_byte_range(Ptr, start * sizeof(ushort), end * sizeof(ushort));
 
-    public void SetPointRange(Point start, Point end)
-    {
-        Binding.ts_query_cursor_set_point_range(Ptr, start, end);
-    }
+    public void SetPointRange(Point start, Point end) => Binding.ts_query_cursor_set_point_range(Ptr, start, end);
 
     public QueryMatch? NextMatch()
     {
@@ -62,8 +47,11 @@ public sealed class QueryCursor : IDisposable
             var intPtr = nativeMatch.Captures + Marshal.SizeOf(typeof(Binding.QueryCapture)) * n;
             var nativeCapture = Marshal.PtrToStructure<Binding.QueryCapture>(intPtr);
 
-            // TODO: Don't know how to solve this yet.
-            match.Captures[n] = new QueryCapture(nativeCapture.Index, Node.FromNative(nativeCapture.Node, Tree));
+            var node = Node.FromNative(nativeCapture.Node, Tree);
+            if (node is null)
+                throw new InvalidOperationException("Failed to retrieve node for capture.");
+
+            match.Captures[n] = new QueryCapture(nativeCapture.Index, node);
         }
 
         return match;
@@ -78,8 +66,11 @@ public sealed class QueryCursor : IDisposable
 
         var intPtr = nativeMatch.Captures + Marshal.SizeOf(typeof(Binding.QueryCapture)) * (ushort)captureIndex;
         var nativeCapture = Marshal.PtrToStructure<Binding.QueryCapture>(intPtr);
-        // TODO: Don't know how to solve this yet.
-        return new QueryCapture(nativeCapture.Index, Node.FromNative(nativeCapture.Node, Tree));
+        var node = Node.FromNative(nativeCapture.Node, Tree);
+        if (node is null)
+            throw new InvalidOperationException("Failed to retrieve node for capture.");
+
+        return new QueryCapture(nativeCapture.Index, node);
     }
 
 }
