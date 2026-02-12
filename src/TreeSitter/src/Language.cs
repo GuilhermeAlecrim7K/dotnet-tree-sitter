@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace TreeSitter;
@@ -14,37 +12,33 @@ public class Language : IDisposable
 
     protected Language(IntPtr ptr)
     {
+        if (ptr == IntPtr.Zero)
+            throw new ArgumentNullException(nameof(ptr));
         Ptr = ptr;
 
+        // NOTE: Why +1? Copilot suggested: Because the count is zero-based, but we want to include the last one? Wasn't able to verify this yet.
         var symbolCount = Binding.ts_language_symbol_count(Ptr) + 1;
-        var symbols = new string[symbolCount];
+        Symbols = new string[symbolCount];
 
-        for (ushort i = 0; i < symbols.Length; i++)
-        {
-            symbols[i] = Marshal.PtrToStringAnsi(Binding.ts_language_symbol_name(Ptr, i));
-        }
-
-        Symbols = symbols;
+        for (ushort i = 0; i < Symbols.Length; i++)
+            Symbols[i] = Marshal.PtrToStringAnsi(Binding.ts_language_symbol_name(Ptr, i)) ?? throw new InvalidOperationException($"Wasn't expecting null symbol name for id {i}");
 
         var fieldCount = (int)Binding.ts_language_field_count(Ptr) + 1;
-        var fields = new string[fieldCount + 1];
-        var fieldIds = new Dictionary<string, ushort>();
+        Fields = new string[fieldCount + 1];
+        FieldIds = new Dictionary<string, ushort>();
 
-        for (ushort i = 0; i < fields.Length; i++)
+        for (ushort i = 0; i < Fields.Length; i++)
         {
-            fields[i] = Marshal.PtrToStringAnsi(Binding.ts_language_field_name_for_id(Ptr, i));
-            if (fields[i] != null)
-            {
-                fieldIds.Add(fields[i], i); // TODO: check for dupes, and throw if found
-            }
+            Fields[i] = Marshal.PtrToStringAnsi(Binding.ts_language_field_name_for_id(Ptr, i)) ?? throw new InvalidOperationException($"Wasn't expecting null field name for id {i}");
+            if (Fields[i] != null)
+                if (!FieldIds.TryAdd(Fields[i], i))
+                    throw new InvalidOperationException($"Wasn't expecting duplicate field name {Fields[i]} for id {i}");
         }
-        
-        Fields = fields;
-        FieldIds = fieldIds;
     }
 
     public void Dispose()
     {
+        // TODO: Free language
     }
 
     public string SymbolName(ushort symbol) => symbol != ushort.MaxValue ? Symbols[symbol] : "ERROR";
@@ -52,6 +46,4 @@ public class Language : IDisposable
     public ushort FieldIdForName(string str) => FieldIds.GetValueOrDefault(str, (ushort)0);
     public SymbolType SymbolType(ushort symbol) => Binding.ts_language_symbol_type(Ptr, symbol);
 
-
-    internal static Language FromNative(IntPtr ptr) => new(ptr);
 }

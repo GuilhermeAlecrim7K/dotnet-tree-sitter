@@ -1,4 +1,3 @@
-using System;
 using System.Runtime.InteropServices;
 
 namespace TreeSitter;
@@ -51,12 +50,10 @@ public sealed class QueryCursor : IDisposable
         Binding.ts_query_cursor_set_point_range(Ptr, start, end);
     }
 
-    public QueryMatch NextMatch()
+    public QueryMatch? NextMatch()
     {
         if (!Binding.ts_query_cursor_next_match(Ptr, out var nativeMatch))
-        {
             return null;
-        }
 
         var match = new QueryMatch(nativeMatch.PatternIndex, new QueryCapture[nativeMatch.CaptureCount]);
         
@@ -65,6 +62,7 @@ public sealed class QueryCursor : IDisposable
             var intPtr = nativeMatch.Captures + Marshal.SizeOf(typeof(Binding.QueryCapture)) * n;
             var nativeCapture = Marshal.PtrToStructure<Binding.QueryCapture>(intPtr);
 
+            // TODO: Don't know how to solve this yet.
             match.Captures[n] = new QueryCapture(nativeCapture.Index, Node.FromNative(nativeCapture.Node, Tree));
         }
 
@@ -73,16 +71,15 @@ public sealed class QueryCursor : IDisposable
 
     public void RemoveMatch(uint id) => Binding.ts_query_cursor_remove_match(Ptr, id);
 
-    public QueryCapture NextCapture()
+    public QueryCapture? NextCapture()
     {
         if (!Binding.ts_query_cursor_next_capture(Ptr, out var nativeMatch, out var captureIndex))
-        {
             return null;
-        }
+
         var intPtr = nativeMatch.Captures + Marshal.SizeOf(typeof(Binding.QueryCapture)) * (ushort)captureIndex;
         var nativeCapture = Marshal.PtrToStructure<Binding.QueryCapture>(intPtr);
+        // TODO: Don't know how to solve this yet.
         return new QueryCapture(nativeCapture.Index, Node.FromNative(nativeCapture.Node, Tree));
-
     }
 
 }

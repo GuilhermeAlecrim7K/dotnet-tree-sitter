@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace TreeSitter;
@@ -105,13 +102,13 @@ public static class QueryUtils
             yield return capture;
         }
     }
-    
-    public static QueryCapture ByIndex( this IEnumerable<QueryCapture> captures, uint index) =>
+
+    public static QueryCapture ByIndex(this IEnumerable<QueryCapture> captures, uint index) =>
         captures.FirstOrDefault(x => x.Index == index);
 
-    public static QueryMatch ByIndex( this IEnumerable<QueryMatch> matches, uint index) =>
+    public static QueryMatch ByIndex(this IEnumerable<QueryMatch> matches, uint index) =>
         matches.FirstOrDefault(x => x.Index == index);
 
     public static IEnumerable<Node> CapturedNodes(this Query query, Node node) =>
         query.Captures(node).Select(x => x.Node);
- }
+}

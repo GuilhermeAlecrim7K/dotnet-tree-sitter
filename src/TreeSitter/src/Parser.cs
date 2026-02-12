@@ -1,24 +1,13 @@
-using System;
-
 namespace TreeSitter;
 
 public sealed class Parser : IDisposable
 {
     private IntPtr Ptr { get; set; }
-    public Language Language { get; private set; }
+    public Language? Language { get; private set; }
 
     public Parser()
     {
         Ptr = Binding.ts_parser_new();
-    }
-
-    public Parser(Language language)
-        : this()
-    {
-        if (!SetLanguage(language))
-        {
-            throw new Exception("Language could not be set");
-        }
     }
 
     public void Dispose()
@@ -45,8 +34,11 @@ public sealed class Parser : IDisposable
 
     public Range[] IncludedRanges() => Binding.ts_parser_included_ranges(Ptr, out _);
 
-    public Tree ParseString(string source, Tree oldTree = null)
+    public Tree? ParseString(string source, Tree? oldTree = null)
     {
+        if (Language is null)
+            throw new InvalidOperationException("Language must be set before parsing.");
+
         var ptr = Binding.ts_parser_parse_string_encoding(Ptr, oldTree?.Ptr ?? IntPtr.Zero,
             source, (uint)source.Length * 2, InputEncoding.InputEncodingUTF16);
         return ptr != IntPtr.Zero ? new Tree(ptr, Language) : null;
@@ -60,9 +52,13 @@ public sealed class Parser : IDisposable
 
     public void SetLogger(Logger logger)
     {
+        // TODO: Must manage instance according to documentation. Not here, maybe.
+        if (logger is null)
+            return;
         var data = new Binding.LoggerData
         {
-            Log = logger != null ? new Binding.LogCallback((_, type, message) => logger(type, message)) : null
+            // NOTE: Don't know how this works yet. Must investigate later.
+            Log = new Binding.LogCallback((_, type, message) => logger(type, message))
         };
         Binding.ts_parser_set_logger(Ptr, data);
     }

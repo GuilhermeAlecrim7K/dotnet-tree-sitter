@@ -1,5 +1,3 @@
-using System;
-
 namespace TreeSitter;
 
 public sealed class Tree : IDisposable
@@ -25,12 +23,17 @@ public sealed class Tree : IDisposable
     public Tree Copy()
     {
         var ptr = Binding.ts_tree_copy(Ptr);
-        return ptr != IntPtr.Zero ? new Tree(ptr, Language) : null;
+        if (ptr == IntPtr.Zero)
+            throw new InvalidOperationException("Failed to copy tree.");
+        return new Tree(ptr, Language);
     }
 
-    public Node RootNode() => Node.FromNative(Binding.ts_tree_root_node(Ptr), this);
+    public Node? RootNode()
+    {
+        return Node.FromNative(Binding.ts_tree_root_node(Ptr), this);
+    }
 
-    public Node RootNodeWithOffset(uint offsetBytes, Point offsetPoint) => Node.FromNative(Binding.ts_tree_root_node_with_offset(Ptr, offsetBytes, offsetPoint), this);
+    public Node? RootNodeWithOffset(uint offsetBytes, Point offsetPoint) => Node.FromNative(Binding.ts_tree_root_node_with_offset(Ptr, offsetBytes, offsetPoint), this);
 
     public void Edit(InputEdit edit) => Binding.ts_tree_edit(Ptr, ref edit);
 }

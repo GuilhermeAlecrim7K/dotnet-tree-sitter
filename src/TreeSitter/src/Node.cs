@@ -1,4 +1,3 @@
-using System;
 using System.Runtime.InteropServices;
 
 namespace TreeSitter;
@@ -15,7 +14,7 @@ public sealed class Node
         Tree = tree;
     }
 
-    public string Type() => Marshal.PtrToStringAnsi(Binding.ts_node_type(NativeNode));
+    public string Type() => Marshal.PtrToStringAnsi(Binding.ts_node_type(NativeNode)) ?? "";
     public ushort Symbol() => Binding.ts_node_symbol(NativeNode);
     public uint StartOffset() => Binding.ts_node_start_byte(NativeNode) / sizeof(ushort);
 
@@ -36,7 +35,7 @@ public sealed class Node
     public override string ToString()
     {
         var dat = Binding.ts_node_string(NativeNode);
-        var str = Marshal.PtrToStringAnsi(dat);
+        var str = Marshal.PtrToStringAnsi(dat) ?? "";
         Binding.ts_node_string_free(dat);
         return str;
     }
@@ -55,60 +54,56 @@ public sealed class Node
 
     public bool HasError() => Binding.ts_node_has_error(NativeNode);
 
-    public Node Parent() => FromNative(Binding.ts_node_parent(NativeNode), Tree);
+    public Node? Parent() => FromNative(Binding.ts_node_parent(NativeNode), Tree);
 
-    public Node Child(uint index) => FromNative(Binding.ts_node_child(NativeNode, index), Tree);
+    public Node? Child(uint index) => FromNative(Binding.ts_node_child(NativeNode, index), Tree);
 
-    public string FieldNameForChild(uint index) => Marshal.PtrToStringAnsi(Binding.ts_node_field_name_for_child(NativeNode, index));
+    public string? FieldNameForChild(uint index) => Marshal.PtrToStringAnsi(Binding.ts_node_field_name_for_child(NativeNode, index));
 
     public uint ChildCount() => Binding.ts_node_child_count(NativeNode);
 
-    public Node NamedChild(uint index) => FromNative(Binding.ts_node_named_child(NativeNode, index), Tree);
+    public Node? NamedChild(uint index) => FromNative(Binding.ts_node_named_child(NativeNode, index), Tree);
 
     public uint NamedChildCount() => Binding.ts_node_named_child_count(NativeNode);
 
-    public Node ChildByFieldName(string fieldName) => FromNative(Binding.ts_node_child_by_field_name(NativeNode, fieldName, (uint)fieldName.Length), Tree);
+    public Node? ChildByFieldName(string fieldName) => FromNative(Binding.ts_node_child_by_field_name(NativeNode, fieldName, (uint)fieldName.Length), Tree);
 
-    public Node ChildByFieldId(ushort fieldId) => FromNative(Binding.ts_node_child_by_field_id(NativeNode, fieldId), Tree);
+    public Node? ChildByFieldId(ushort fieldId) => FromNative(Binding.ts_node_child_by_field_id(NativeNode, fieldId), Tree);
 
-    public Node NextSibling() => FromNative(Binding.ts_node_next_sibling(NativeNode), Tree);
+    public Node? NextSibling() => FromNative(Binding.ts_node_next_sibling(NativeNode), Tree);
 
-    public Node PrevSibling() => FromNative(Binding.ts_node_prev_sibling(NativeNode), Tree);
+    public Node? PrevSibling() => FromNative(Binding.ts_node_prev_sibling(NativeNode), Tree);
 
-    public Node NextNamedSibling() => FromNative(Binding.ts_node_next_named_sibling(NativeNode), Tree);
+    public Node? NextNamedSibling() => FromNative(Binding.ts_node_next_named_sibling(NativeNode), Tree);
 
-    public Node PrevNamedSibling() => FromNative(Binding.ts_node_prev_named_sibling(NativeNode), Tree);
+    public Node? PrevNamedSibling() => FromNative(Binding.ts_node_prev_named_sibling(NativeNode), Tree);
 
-    public Node FirstChildForOffset(uint offset) => FromNative(Binding.ts_node_first_child_for_byte(NativeNode, offset * sizeof(ushort)), Tree);
+    public Node? FirstChildForOffset(uint offset) => FromNative(Binding.ts_node_first_child_for_byte(NativeNode, offset * sizeof(ushort)), Tree);
 
-    public Node FirstNamedChildForOffset(uint offset) => FromNative(Binding.ts_node_first_named_child_for_byte(NativeNode, offset * sizeof(ushort)), Tree);
+    public Node? FirstNamedChildForOffset(uint offset) => FromNative(Binding.ts_node_first_named_child_for_byte(NativeNode, offset * sizeof(ushort)), Tree);
 
-    public Node DescendantForOffsetRange(uint start, uint end) => FromNative(Binding.ts_node_descendant_for_byte_range(NativeNode, start * sizeof(ushort), end * sizeof(ushort)), Tree);
+    public Node? DescendantForOffsetRange(uint start, uint end) => FromNative(Binding.ts_node_descendant_for_byte_range(NativeNode, start * sizeof(ushort), end * sizeof(ushort)), Tree);
 
-    public Node DescendantForPointRange(Point start, Point end) => FromNative(Binding.ts_node_descendant_for_point_range(NativeNode, start, end), Tree);
+    public Node? DescendantForPointRange(Point start, Point end) => FromNative(Binding.ts_node_descendant_for_point_range(NativeNode, start, end), Tree);
 
-    public Node NamedDescendantForOffsetRange(uint start, uint end) => FromNative(Binding.ts_node_named_descendant_for_byte_range(NativeNode, start * sizeof(ushort), end * sizeof(ushort)), Tree);
+    public Node? NamedDescendantForOffsetRange(uint start, uint end) => FromNative(Binding.ts_node_named_descendant_for_byte_range(NativeNode, start * sizeof(ushort), end * sizeof(ushort)), Tree);
 
-    public Node NamedDescendantForPointRange(Point start, Point end) => FromNative(Binding.ts_node_named_descendant_for_point_range(NativeNode, start, end), Tree);
+    public Node? NamedDescendantForPointRange(Point start, Point end) => FromNative(Binding.ts_node_named_descendant_for_point_range(NativeNode, start, end), Tree);
 
     public string Text(string data) => data[(int)StartOffset()..(int)EndOffset()];
 
-    internal static Node FromNative(Binding.Node nativeNode, Tree tree) => nativeNode.Id == IntPtr.Zero ? null : new(nativeNode, tree);
+    internal static Node? FromNative(Binding.Node nativeNode, Tree tree) => Binding.ts_node_is_null(nativeNode) ? null : new(nativeNode, tree);
 
-    public override bool Equals(object obj) => ReferenceEquals(this, obj) || obj is Node other && this == other;
+    public override bool Equals(object? obj) => ReferenceEquals(this, obj) || obj is Node other && this == other;
     public override int GetHashCode() => NativeNode.GetHashCode();
 
     public static bool operator == (Node a, Node b)
     {
         if (ReferenceEquals(a, b))
-        {
             return true;
-        }
 
         if ((object)a == null || (object)b == null)
-        {
             return false;
-        }
 
         return Binding.ts_node_eq(a.NativeNode, b.NativeNode);
     }
