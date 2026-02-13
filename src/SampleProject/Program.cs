@@ -4,8 +4,14 @@ namespace SampleProject;
 
 public class Program
 {
-	public static void Main()
-	{
+    public static void Main()
+    {
+        GettingStarted();
+        WorkingWithQueries();
+    }
+
+    public static void GettingStarted()
+    {
         using var parser = new Parser();
         using var jsonLang = Json.CreateLanguage();
         parser.SetLanguage(jsonLang);
@@ -26,6 +32,32 @@ public class Program
         Console.WriteLine($"Array node named children count: {arrayNode.NamedChildCount()}. Expected: 2.");
         Console.WriteLine($"Number node children count: {numberNode.ChildCount()}. Expected: 0.");
 
-        Console.WriteLine($"Root node text: '{rootNode.ToString()}'.");
-	}
+        Console.WriteLine($"S-Expression: '{rootNode.ToString()}'.");
+    }
+
+
+    public static void WorkingWithQueries()
+    {
+        using var lang = Json.CreateLanguage();
+        var source = """
+        {
+          "a": 1,
+          "b": "2",
+          "c": 3
+        }
+        """;
+        using var parser = new Parser();
+        parser.SetLanguage(lang);
+        using var tree = parser.ParseString(source);
+        var rootNode = tree.RootNode();
+        Console.WriteLine($"S-Expression: '{rootNode.ToString()}'.");
+
+        using var query = new Query(lang, "(pair key: (string) @key value: (number) @value)");
+
+        var captures = query.Captures(rootNode).ToList();
+        for (int i = 0; i < captures.Count; i++)
+        {
+            Console.WriteLine($"Capture {query.CaptureNameForId(captures[i].Index)} at {i}: {captures[i].Node.Text(source)}, '{captures[i].Node.Type()}'");
+        }
+    }
 }

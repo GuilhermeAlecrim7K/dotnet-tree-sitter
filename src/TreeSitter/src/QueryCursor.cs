@@ -48,8 +48,7 @@ public sealed class QueryCursor : IDisposable
             var nativeCapture = Marshal.PtrToStructure<Binding.QueryCapture>(intPtr);
 
             var node = Node.FromNative(nativeCapture.Node, Tree);
-            if (node is null)
-                throw new InvalidOperationException("Failed to retrieve node for capture.");
+            if (node is null) throw new InvalidOperationException("Failed to retrieve node for capture.");
 
             match.Captures[n] = new QueryCapture(nativeCapture.Index, node);
         }

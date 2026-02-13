@@ -55,7 +55,6 @@ public sealed class Query : IDisposable
         return cursor;
     }
 
-
     public uint PatternCount() => Binding.ts_query_pattern_count(Ptr);
 
     public uint CaptureCount() => Binding.ts_query_capture_count(Ptr);
@@ -87,20 +86,18 @@ public static class QueryUtils
 {
     public static IEnumerable<QueryMatch> Matches(this Query query, Node node)
     {
+        // TODO: Memory leak?
         var cursor = query.Exec(node);
         while (cursor.NextMatch() is { } match)
-        {
             yield return match;
-        }
     }
 
     public static IEnumerable<QueryCapture> Captures(this Query query, Node node)
     {
+        // TODO: Memory leak?
         var cursor = query.Exec(node);
         while (cursor.NextCapture() is { } capture)
-        {
             yield return capture;
-        }
     }
 
     public static QueryCapture? ByIndex(this IEnumerable<QueryCapture> captures, uint index) =>
