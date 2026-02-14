@@ -12,9 +12,8 @@ public class Program
 
     public static void GettingStarted()
     {
-        using var parser = new Parser();
         using var jsonLang = Json.CreateLanguage();
-        parser.SetLanguage(jsonLang);
+        using var parser = jsonLang.CreateParser();
 
         var source = @"[1, null]";
 
@@ -46,8 +45,7 @@ public class Program
           "c": 3
         }
         """;
-        using var parser = new Parser();
-        parser.SetLanguage(lang);
+        using var parser = lang.CreateParser();
         using var tree = parser.ParseString(source);
         var rootNode = tree.RootNode();
         Console.WriteLine($"S-Expression: '{rootNode.ToString()}'.");

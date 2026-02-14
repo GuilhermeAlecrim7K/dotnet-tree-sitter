@@ -3,11 +3,18 @@ namespace TreeSitter;
 public sealed class Parser : IDisposable
 {
     private IntPtr Ptr { get; set; }
-    public Language? Language { get; private set; }
+    private readonly Language _language;
 
-    public Parser()
+    public Language Language => _language;
+
+    internal Parser(Language language)
     {
         Ptr = Binding.ts_parser_new();
+        if (Ptr == IntPtr.Zero)
+            throw new InvalidOperationException("Failed to create a new parser instance.");
+        if (!Binding.ts_parser_set_language(Ptr, language.Ptr))
+            throw new InvalidOperationException("Failed to set the language for the parser.");
+        _language = language;
     }
 
     public void Dispose()
@@ -19,46 +26,31 @@ public sealed class Parser : IDisposable
         }
     }
 
-    public bool SetLanguage(Language language)
-    {
-        if (Binding.ts_parser_set_language(Ptr, language.Ptr))
-        {
-            Language = language;
-            return true;
-        }
-
-        return false;
-    }
-
     public bool SetIncludedRanges(Range[] ranges) => Binding.ts_parser_set_included_ranges(Ptr, ranges, (uint)ranges.Length);
 
     public Range[] IncludedRanges() => Binding.ts_parser_included_ranges(Ptr, out _);
 
     public Tree ParseString(string source, Tree? oldTree = null)
     {
-        if (Language is null)
-            throw new InvalidOperationException("Language must be set before parsing.");
-
         var ptr = Binding.ts_parser_parse_string_encoding(Ptr, oldTree?.Ptr ?? IntPtr.Zero,
             source, (uint)source.Length * 2, InputEncoding.InputEncodingUTF16);
-        return ptr != IntPtr.Zero ? new Tree(ptr, Language) : throw new InvalidOperationException("Failed to parse the source into a tree.");
+        return ptr != IntPtr.Zero ? new Tree(ptr, _language) : throw new InvalidOperationException("Failed to parse the source into a tree.");
     }
 
     public void Reset() => Binding.ts_parser_reset(Ptr);
 
-    public void SetTimeout(TimeSpan timeout) => Binding.ts_parser_set_timeout_micros(Ptr, (ulong)timeout.TotalMicroseconds);
-
-    public TimeSpan TimeOut() => TimeSpan.FromMicroseconds(Binding.ts_parser_timeout_micros(Ptr));
+    private Binding.LogCallback? _logCallbackKeepAliveRef;
 
     public void SetLogger(Logger logger)
     {
-        // TODO: Must manage instance according to documentation. Not here, maybe.
+        _logCallbackKeepAliveRef = null;
         if (logger is null)
             return;
+
+        _logCallbackKeepAliveRef = new Binding.LogCallback((_, type, message) => logger(type, message));
         var data = new Binding.LoggerData
         {
-            // NOTE: Don't know how this works yet. Must investigate later.
-            Log = new Binding.LogCallback((_, type, message) => logger(type, message))
+            Log = System.Runtime.InteropServices.Marshal.GetFunctionPointerForDelegate(_logCallbackKeepAliveRef),
         };
         Binding.ts_parser_set_logger(Ptr, data);
     }
