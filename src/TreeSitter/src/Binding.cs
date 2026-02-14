@@ -394,4 +394,7 @@ internal static class Binding
 
     [DllImport("tree-sitter", CallingConvention = CallingConvention.Cdecl)]
     public static extern IntPtr ts_tree_get_changed_ranges(IntPtr old_tree, IntPtr new_tree, out uint length);
+
+    [DllImport("tree-sitter", CallingConvention = CallingConvention.Cdecl)]
+    public static extern void ts_language_delete(IntPtr ptr);
 }

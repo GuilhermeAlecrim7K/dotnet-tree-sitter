@@ -8,7 +8,7 @@ public class Language : IDisposable
     internal readonly string[] Fields;
     internal readonly Dictionary<string, ushort> FieldIds;
 
-    internal readonly IntPtr Ptr;
+    internal IntPtr Ptr;
 
     protected Language(IntPtr ptr)
     {
@@ -40,7 +40,11 @@ public class Language : IDisposable
 
     public void Dispose()
     {
-        // TODO: Free language
+        if (Ptr != IntPtr.Zero)
+        {
+            Binding.ts_language_delete(Ptr);
+            Ptr = IntPtr.Zero;
+        }
     }
 
     public string SymbolName(ushort symbol) => symbol != ushort.MaxValue ? Symbols[symbol] : "ERROR";
