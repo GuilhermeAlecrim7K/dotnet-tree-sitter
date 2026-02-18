@@ -12,7 +12,7 @@ public class Program
 
     public static void GettingStarted()
     {
-        using var jsonLang = Json.CreateLanguage();
+        using var jsonLang = new JsonLanguage();
         using var parser = jsonLang.CreateParser();
 
         var source = @"[1, null]";
@@ -22,6 +22,9 @@ public class Program
         var arrayNode = rootNode.NamedChild(0)!;
         var numberNode = arrayNode.NamedChild(0)!;
 
+        Console.WriteLine($"Source: '{source}'.");
+        Console.WriteLine($"S-Expression: '{rootNode.ToString()}'.");
+
         Console.WriteLine($"Root node type: {rootNode.Type()}. Expected: 'document'.");
         Console.WriteLine($"Root node named child 0 type: {arrayNode.Type()}. Expected: 'array'.");
         Console.WriteLine($"Array node named child 0 type: {numberNode.Type()}. Expected: 'number'.");
@@ -30,14 +33,12 @@ public class Program
         Console.WriteLine($"Array node children count: {arrayNode.ChildCount()}. Expected: 5.");
         Console.WriteLine($"Array node named children count: {arrayNode.NamedChildCount()}. Expected: 2.");
         Console.WriteLine($"Number node children count: {numberNode.ChildCount()}. Expected: 0.");
-
-        Console.WriteLine($"S-Expression: '{rootNode.ToString()}'.");
     }
 
 
     public static void WorkingWithQueries()
     {
-        using var lang = Json.CreateLanguage();
+        using var lang = new JsonLanguage();
         var source = """
         {
           "a": 1,
@@ -48,6 +49,8 @@ public class Program
         using var parser = lang.CreateParser();
         using var tree = parser.ParseString(source);
         var rootNode = tree.RootNode();
+
+        Console.WriteLine($"Source: '{source}'.");
         Console.WriteLine($"S-Expression: '{rootNode.ToString()}'.");
 
         using var query = new Query(lang, "(pair key: (string) @key value: (number) @value)");

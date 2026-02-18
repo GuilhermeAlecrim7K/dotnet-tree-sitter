@@ -3,17 +3,8 @@ using System.Runtime.InteropServices;
 
 namespace SampleProject;
 
-public static partial class Json
+internal sealed partial class JsonLanguage() : Language(tree_sitter_json())
 {
-	public static Language CreateLanguage() => new JsonLanguage();
-
-	private class JsonLanguage : Language
-	{
-		public JsonLanguage() : base(tree_sitter_json())
-		{
-		}
-	}
-
 	[LibraryImport("tree-sitter-json")]
 	[UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvCdecl)})]
 	private static partial IntPtr tree_sitter_json();
