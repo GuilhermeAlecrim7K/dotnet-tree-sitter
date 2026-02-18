@@ -2,8 +2,9 @@ using System.Runtime.InteropServices;
 
 namespace TreeSitter;
 
-public class Language : IDisposable
+public abstract class Language : IDisposable
 {
+    // TODO: Why should I even cache this? Is it really that much faster than calling the native method every time?
     internal readonly string[] Symbols;
     internal readonly string[] Fields;
     internal readonly Dictionary<string, ushort> FieldIds;

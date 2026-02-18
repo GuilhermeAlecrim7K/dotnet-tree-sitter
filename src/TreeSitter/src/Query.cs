@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 
 namespace TreeSitter;
 
-public class QueryException(uint errorOffset, QueryError error) : Exception
+public sealed class QueryException(uint errorOffset, QueryError error) : Exception
 {
     public uint ErrorOffset { get; } = errorOffset;
     public QueryError Error { get; } = error;
