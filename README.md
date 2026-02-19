@@ -11,7 +11,7 @@ class Program
     static void Main(string[] args)
     {
         var lang = new PythonLanguage();
-        var parser = new Parser(lang);
+        var parser = lang.CreateParser(lang);
         var source = File.ReadAllText("source.py", Encoding.UTF8);
 
         using var tree = parser.ParseString(source);
