@@ -149,7 +149,7 @@ public abstract class Language : IDisposable
     public Parser CreateParser()
     {
         ThrowIfDisposed();
-        return new Parser(this, _pointer);
+        return new Parser(this);
     }
 
     public Query CreateQuery(string source)
