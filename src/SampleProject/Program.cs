@@ -53,7 +53,7 @@ public class Program
         Console.WriteLine($"Source: '{source}'.");
         Console.WriteLine($"S-Expression: '{rootNode.ToString()}'.");
 
-        using var query = new Query(lang, "(pair key: (string) @key value: (number) @value)");
+        using var query = lang.CreateQuery("(pair key: (string) @key value: (number) @value)");
 
         var captures = query.Captures(rootNode).ToList();
         for (int i = 0; i < captures.Count; i++)

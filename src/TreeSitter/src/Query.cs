@@ -22,18 +22,13 @@ public sealed class QueryMatch(ushort index, QueryCapture[] captures)
 
 public sealed class Query : IDisposable
 {
-    internal IntPtr Ptr;
+    private IntPtr _pointer;
 
-    internal Query(IntPtr ptr)
+    internal Query(IntPtr languagePointer, string source)
     {
-        Ptr = ptr;
-    }
+        _pointer = Binding.ts_query_new(languagePointer, source, (uint)source.Length, out var errorOffset, out var errorType);
 
-    public Query(Language language, string source)
-    {
-        Ptr = Binding.ts_query_new(language.Ptr, source, (uint)source.Length, out var errorOffset, out var errorType);
-
-        if (Ptr == IntPtr.Zero)
+        if (_pointer == IntPtr.Zero)
         {
             throw new QueryException(errorOffset / sizeof(ushort), errorType);
         }
@@ -41,45 +36,45 @@ public sealed class Query : IDisposable
 
     public void Dispose()
     {
-        if (Ptr != IntPtr.Zero)
+        if (_pointer != IntPtr.Zero)
         {
-            Binding.ts_query_delete(Ptr);
-            Ptr = IntPtr.Zero;
+            Binding.ts_query_delete(_pointer);
+            _pointer = IntPtr.Zero;
         }
     }
 
     public QueryCursor Exec(Node node)
     {
         var cursor = new QueryCursor(this, node.Tree);
-        Binding.ts_query_cursor_exec(cursor.Ptr, Ptr, node.NativeNode);
+        Binding.ts_query_cursor_exec(cursor.Ptr, _pointer, node.NativeNode);
         return cursor;
     }
 
-    public uint PatternCount() => Binding.ts_query_pattern_count(Ptr);
+    public uint PatternCount() => Binding.ts_query_pattern_count(_pointer);
 
-    public uint CaptureCount() => Binding.ts_query_capture_count(Ptr);
+    public uint CaptureCount() => Binding.ts_query_capture_count(_pointer);
 
-    public uint StringCount() => Binding.ts_query_string_count(Ptr);
+    public uint StringCount() => Binding.ts_query_string_count(_pointer);
 
-    public uint StartOffsetForPattern(uint patternIndex) => Binding.ts_query_start_byte_for_pattern(Ptr, patternIndex) / sizeof(ushort);
+    public uint StartOffsetForPattern(uint patternIndex) => Binding.ts_query_start_byte_for_pattern(_pointer, patternIndex) / sizeof(ushort);
 
-    public QueryPredicateStep[] PredicatesForPattern(uint patternIndex) => Binding.ts_query_predicates_for_pattern(Ptr, patternIndex, out _);
+    public QueryPredicateStep[] PredicatesForPattern(uint patternIndex) => Binding.ts_query_predicates_for_pattern(_pointer, patternIndex, out _);
 
-    public bool IsPatternRooted(uint patternIndex) => Binding.ts_query_is_pattern_rooted(Ptr, patternIndex);
+    public bool IsPatternRooted(uint patternIndex) => Binding.ts_query_is_pattern_rooted(_pointer, patternIndex);
 
-    public bool IsPatternNonLocal(uint patternIndex) => Binding.ts_query_is_pattern_non_local(Ptr, patternIndex);
+    public bool IsPatternNonLocal(uint patternIndex) => Binding.ts_query_is_pattern_non_local(_pointer, patternIndex);
 
-    public bool IsPatternGuaranteedAtOffset(uint offset) => Binding.ts_query_is_pattern_guaranteed_at_step(Ptr, offset / sizeof(ushort));
+    public bool IsPatternGuaranteedAtOffset(uint offset) => Binding.ts_query_is_pattern_guaranteed_at_step(_pointer, offset / sizeof(ushort));
 
-    public string? CaptureNameForId(uint id) => Marshal.PtrToStringAnsi(Binding.ts_query_capture_name_for_id(Ptr, id, out _));
+    public string? CaptureNameForId(uint id) => Marshal.PtrToStringAnsi(Binding.ts_query_capture_name_for_id(_pointer, id, out _));
 
-    public Quantifier CaptureQuantifierForId(uint patternId, uint captureId) => Binding.ts_query_capture_quantifier_for_id(Ptr, patternId, captureId);
+    public Quantifier CaptureQuantifierForId(uint patternId, uint captureId) => Binding.ts_query_capture_quantifier_for_id(_pointer, patternId, captureId);
 
-    public string? StringValueForId(uint id) => Marshal.PtrToStringAnsi(Binding.ts_query_string_value_for_id(Ptr, id, out _));
+    public string? StringValueForId(uint id) => Marshal.PtrToStringAnsi(Binding.ts_query_string_value_for_id(_pointer, id, out _));
 
-    public void DisableCapture(string captureName) => Binding.ts_query_disable_capture(Ptr, captureName, (uint)captureName.Length);
+    public void DisableCapture(string captureName) => Binding.ts_query_disable_capture(_pointer, captureName, (uint)captureName.Length);
 
-    public void DisablePattern(uint patternIndex) => Binding.ts_query_disable_pattern(Ptr, patternIndex);
+    public void DisablePattern(uint patternIndex) => Binding.ts_query_disable_pattern(_pointer, patternIndex);
 }
 
 public static class QueryUtils

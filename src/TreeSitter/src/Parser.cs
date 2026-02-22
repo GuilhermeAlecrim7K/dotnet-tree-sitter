@@ -7,12 +7,12 @@ public sealed class Parser : IDisposable
 
     public Language Language => _language;
 
-    internal Parser(Language language)
+    internal Parser(Language language, IntPtr languagePointer)
     {
         Ptr = Binding.ts_parser_new();
         if (Ptr == IntPtr.Zero)
             throw new InvalidOperationException("Failed to create a new parser instance.");
-        if (!Binding.ts_parser_set_language(Ptr, language.Ptr))
+        if (!Binding.ts_parser_set_language(Ptr, languagePointer))
             throw new InvalidOperationException("Failed to set the language for the parser.");
         _language = language;
     }
@@ -33,7 +33,7 @@ public sealed class Parser : IDisposable
     public Tree ParseString(string source, Tree? oldTree = null)
     {
         var ptr = Binding.ts_parser_parse_string_encoding(Ptr, oldTree?.Ptr ?? IntPtr.Zero,
-            source, (uint)source.Length * 2, InputEncoding.InputEncodingUTF16);
+            source, (uint)source.Length * 2, InputEncoding.InputEncodingUTF16LE);
         return ptr != IntPtr.Zero ? new Tree(ptr, _language) : throw new InvalidOperationException("Failed to parse the source into a tree.");
     }
 

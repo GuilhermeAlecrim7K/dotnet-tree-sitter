@@ -1,57 +1,161 @@
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace TreeSitter;
 
 public abstract class Language : IDisposable
 {
-    // TODO: Why should I even cache this? Is it really that much faster than calling the native method every time?
-    internal readonly string[] Symbols;
-    internal readonly string[] Fields;
-    internal readonly Dictionary<string, ushort> FieldIds;
+    private IntPtr _pointer;
+    private bool _disposed = false;
 
-    internal IntPtr Ptr;
-
-    protected Language(IntPtr ptr)
+    internal IntPtr Pointer
     {
-        if (ptr == IntPtr.Zero)
-            throw new ArgumentNullException(nameof(ptr));
-        Ptr = ptr;
-
-        // NOTE: Why +1? Copilot suggested: Because the count is zero-based, but we want to include the last one? Wasn't able to verify this yet.
-        var symbolCount = Binding.ts_language_symbol_count(Ptr) + 1;
-        Symbols = new string[symbolCount];
-
-        // HACK: On json, 25 was null
-        for (ushort i = 0; i < Symbols.Length -1; i++)
-            Symbols[i] = Marshal.PtrToStringAnsi(Binding.ts_language_symbol_name(Ptr, i)) ?? throw new InvalidOperationException($"Wasn't expecting null symbol name for id {i}");
-
-        var fieldCount = (int)Binding.ts_language_field_count(Ptr) + 1;
-        Fields = new string[fieldCount + 1];
-        FieldIds = new Dictionary<string, ushort>();
-
-        // HACK: On json, 0 was null and 3 was null
-        for (ushort i = 1; i < Fields.Length -1; i++)
+        get
         {
-            Fields[i] = Marshal.PtrToStringAnsi(Binding.ts_language_field_name_for_id(Ptr, i)) ?? throw new InvalidOperationException($"Wasn't expecting null field name for id {i}");
-            if (Fields[i] != null)
-                if (!FieldIds.TryAdd(Fields[i], i))
-                    throw new InvalidOperationException($"Wasn't expecting duplicate field name {Fields[i]} for id {i}");
+            ThrowIfDisposed();
+            return _pointer;
         }
+    }
+
+    protected Language(IntPtr pointer)
+    {
+        if (pointer == IntPtr.Zero)
+            throw new ArgumentNullException(nameof(pointer));
+        _pointer = pointer;
+        // TODO: Must find a way to validate the pointer.
+    }
+
+    ~Language()
+    {
+        Dispose(false);
     }
 
     public void Dispose()
     {
-        if (Ptr != IntPtr.Zero)
-        {
-            Binding.ts_language_delete(Ptr);
-            Ptr = IntPtr.Zero;
-        }
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
 
-    public Parser CreateParser() => new Parser(this);
-    public string SymbolName(ushort symbol) => symbol != ushort.MaxValue ? Symbols[symbol] : "ERROR";
-    public ushort SymbolForName(string str, bool isNamed) => Binding.ts_language_symbol_for_name(Ptr, str, (uint)str.Length, isNamed);
-    public ushort FieldIdForName(string str) => FieldIds.GetValueOrDefault(str, (ushort)0);
-    public SymbolType SymbolType(ushort symbol) => Binding.ts_language_symbol_type(Ptr, symbol);
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed)
+            return;
+
+        if (disposing)
+        {
+            // Dispose managed resources if any.
+        }
+
+        // Dispose unmanaged resources.
+        Binding.ts_language_delete(_pointer);
+        _pointer = IntPtr.Zero;
+        _disposed = true;
+    }
+
+    public Language Copy()
+    {
+        ThrowIfDisposed();
+        var newPointer = Binding.ts_language_copy(_pointer);
+        if (newPointer == IntPtr.Zero)
+            throw new InvalidOperationException("Failed to copy the language instance. The native function returned a null pointer.");
+
+        var copy = this.MemberwiseClone() as Language;
+        copy!._pointer = newPointer;
+        return copy;
+    }
+
+    public bool Equals(Language? other)
+    {
+        ThrowIfDisposed();
+        if (other is null)
+            return false;
+        if (ReferenceEquals(this, other))
+            return true;
+        return _pointer == other._pointer;
+    }
+
+    private void ThrowIfDisposed()
+    {
+        if (_disposed)
+            throw new ObjectDisposedException(GetType().FullName);
+    }
+
+    public string? Name()
+    {
+        ThrowIfDisposed();
+        return Marshal.PtrToStringUTF8(Binding.ts_language_name(_pointer));
+    }
+
+    public uint AbiVersion()
+    {
+        ThrowIfDisposed();
+        return Binding.ts_language_abi_version(_pointer);
+    }
+
+    public LanguageMetadata Metadata()
+    {
+        ThrowIfDisposed();
+        return Binding.ts_language_metadata(_pointer);
+    }
+
+    public uint SymbolCount()
+    {
+        ThrowIfDisposed();
+        return Binding.ts_language_symbol_count(_pointer);
+    }
+
+    public ushort Symbol(string name, bool isNamed)
+    {
+        ThrowIfDisposed();
+        return Binding.ts_language_symbol_for_name(_pointer, name, (uint)Encoding.UTF8.GetByteCount(name), isNamed);
+    }
+
+    public string? SymbolName(ushort symbol)
+    {
+        ThrowIfDisposed();
+        return Marshal.PtrToStringUTF8(Binding.ts_language_symbol_name(_pointer, symbol));
+    }
+
+    public SymbolType SymbolType(ushort symbol)
+    {
+        ThrowIfDisposed();
+        return Binding.ts_language_symbol_type(_pointer, symbol);
+    }
+
+    public uint FieldCount()
+    {
+        ThrowIfDisposed();
+        return Binding.ts_language_field_count(_pointer);
+    }
+
+    public string? FieldName(ushort field)
+    {
+        ThrowIfDisposed();
+        return Marshal.PtrToStringUTF8(Binding.ts_language_field_name_for_id(_pointer, field));
+    }
+
+    public ushort FieldId(string name)
+    {
+        ThrowIfDisposed();
+        return Binding.ts_language_field_id_for_name(_pointer, name, (uint)Encoding.UTF8.GetByteCount(name));
+    }
+
+    public uint StateCount()
+    {
+        ThrowIfDisposed();
+        return Binding.ts_language_state_count(_pointer);
+    }
+
+    public Parser CreateParser()
+    {
+        ThrowIfDisposed();
+        return new Parser(this, _pointer);
+    }
+
+    public Query CreateQuery(string source)
+    {
+        ThrowIfDisposed();
+        return new Query(_pointer, source);
+    }
 
 }

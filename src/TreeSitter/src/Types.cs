@@ -5,13 +5,16 @@ namespace TreeSitter;
 public enum InputEncoding
 {
     InputEncodingUTF8,
-    InputEncodingUTF16
+    InputEncodingUTF16LE,
+    InputEncodingUTF16BE,
+    InputEncodingCustom
 }
 
 public enum SymbolType
 {
     SymbolTypeRegular,
     SymbolTypeAnonymous,
+    SymbolTypeSuperType,
     SymbolTypeAuxiliary,
 }
 
@@ -88,3 +91,11 @@ public struct QueryPredicateStep
 }
 
 public delegate void Logger(LogType logType, string message);
+
+[StructLayout(LayoutKind.Sequential)]
+public record struct LanguageMetadata
+{
+    public byte MajorVersion;
+    public byte MinorVersion;
+    public byte PatchVersion;
+}

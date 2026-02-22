@@ -31,9 +31,9 @@ public sealed class TreeCursor : IDisposable
     public void Reset(Node node) => Binding.ts_tree_cursor_reset(ref NativeCursor, node.NativeNode);
     public Node CurrentNode() => new (Binding.ts_tree_cursor_current_node(ref NativeCursor), Tree);
 
-    public string CurrentField() => Tree.Language.Fields[Binding.ts_tree_cursor_current_field_id(ref NativeCursor)];
+    public string? CurrentField() => Tree.Language.FieldName(Binding.ts_tree_cursor_current_field_id(ref NativeCursor));
 
-    public string CurrentSymbol() => Tree.Language.SymbolName(Binding.ts_node_symbol(Binding.ts_tree_cursor_current_node(ref NativeCursor)));
+    public string? CurrentSymbol() => Tree.Language.SymbolName(Binding.ts_node_symbol(Binding.ts_tree_cursor_current_node(ref NativeCursor)));
 
     public bool GotoParent() => Binding.ts_tree_cursor_goto_parent(ref NativeCursor);
 

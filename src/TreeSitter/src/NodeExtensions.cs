@@ -18,7 +18,7 @@ public static class NodeExtensions
 
     public static IEnumerable<Node> ChildrenByFieldName(this Node node, string fieldName)
     {
-        var fieldId = node.Tree.Language.FieldIdForName(fieldName);
+        var fieldId = node.Tree.Language.FieldId(fieldName);
 
         if (fieldId == 0)
             yield break;

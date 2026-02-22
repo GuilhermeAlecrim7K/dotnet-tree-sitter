@@ -52,14 +52,6 @@ internal static partial class Binding
         public IntPtr Captures;
     }
 
-    [StructLayout(LayoutKind.Sequential)]
-    public record struct LanguageMetadata
-    {
-        public byte MajorVersion;
-        public byte MinorVersion;
-        public byte PatchVersion;
-    }
-
     [LibraryImport("tree-sitter")]
     [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
     public static partial void free(IntPtr str);
@@ -559,7 +551,7 @@ internal static partial class Binding
     [LibraryImport("tree-sitter")]
     [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
     public static partial ushort ts_language_symbol_for_name(IntPtr language,
-        [MarshalAs(UnmanagedType.LPUTF8Str)] string str, uint length, [MarshalAs(UnmanagedType.Bool)] bool is_named);
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string str, uint length, [MarshalAs(UnmanagedType.I1)] bool is_named);
 
     [LibraryImport("tree-sitter")]
     [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
@@ -599,5 +591,9 @@ internal static partial class Binding
     [LibraryImport("tree-sitter")]
     [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
     public static partial LanguageMetadata ts_language_metadata(IntPtr language);
+
+    [LibraryImport("tree-sitter")]
+    [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvCdecl)})]
+    public static partial IntPtr ts_language_name(IntPtr language);
 
 }
