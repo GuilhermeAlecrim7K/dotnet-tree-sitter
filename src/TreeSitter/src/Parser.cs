@@ -63,7 +63,7 @@ public sealed class Parser : IDisposable
     public Tree ParseString(string source, Tree? oldTree = null)
     {
         ThrowIfDisposed();
-        var ptr = Binding.ts_parser_parse_string_encoding(_pointer, oldTree?.Ptr ?? IntPtr.Zero,
+        var ptr = Binding.ts_parser_parse_string_encoding(_pointer, oldTree?.Pointer ?? IntPtr.Zero,
             source, (uint)source.Length * 2, InputEncoding.InputEncodingUTF16LE);
         return ptr != IntPtr.Zero ? new Tree(ptr, _language) : throw new InvalidOperationException("Failed to parse the source into a tree.");
     }
