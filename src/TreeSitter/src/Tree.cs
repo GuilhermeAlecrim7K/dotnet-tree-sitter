@@ -2,7 +2,7 @@ namespace TreeSitter;
 
 public sealed class Tree : IDisposable
 {
-    private IntPtr _pointer;
+    private readonly IntPtr _pointer;
     private bool _disposed = false;
     public Language Language { get; }
 
@@ -15,9 +15,9 @@ public sealed class Tree : IDisposable
         }
     }
 
-    internal Tree(IntPtr ptr, Language language)
+    internal Tree(IntPtr pointer, Language language)
     {
-        _pointer = ptr;
+        _pointer = pointer;
         Language = language;
     }
 
@@ -43,7 +43,6 @@ public sealed class Tree : IDisposable
         }
 
         Binding.ts_tree_delete(_pointer);
-        _pointer = IntPtr.Zero;
         _disposed = true;
     }
 
@@ -66,13 +65,13 @@ public sealed class Tree : IDisposable
     public Node RootNode()
     {
         ThrowIfDisposed();
-        return Node.FromNative(Binding.ts_tree_root_node(_pointer), this) ?? throw new InvalidOperationException("Failed to get root node.");
+        return Node.FromNative(Binding.ts_tree_root_node(_pointer)) ?? throw new InvalidOperationException("Failed to get root node.");
     }
 
     public Node? RootNodeWithOffset(uint offsetBytes, Point offsetPoint) 
     {
         ThrowIfDisposed();
-        return Node.FromNative(Binding.ts_tree_root_node_with_offset(_pointer, offsetBytes, offsetPoint), this);
+        return Node.FromNative(Binding.ts_tree_root_node_with_offset(_pointer, offsetBytes, offsetPoint));
     }
 
     public void Edit(InputEdit edit) 

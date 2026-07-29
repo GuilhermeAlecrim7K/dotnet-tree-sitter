@@ -99,3 +99,39 @@ public record struct LanguageMetadata
     public byte MinorVersion;
     public byte PatchVersion;
 }
+
+public sealed record class QueryMatch
+{
+    internal QueryMatch(ushort index, QueryCapture[] captures)
+    {
+        Index = index;
+        Captures = captures;
+    }
+
+    public ushort Index { get; }
+    public QueryCapture[] Captures { get; }
+}
+
+public sealed record class QueryCapture
+{
+    internal QueryCapture(uint index, Node node)
+    {
+        Index = index;
+        Node = node;
+    }
+
+    public uint Index { get; }
+    public Node Node { get; }
+}
+
+public sealed class QueryException : Exception
+{
+    internal QueryException(uint errorOffset, QueryError error)
+    {
+        ErrorOffset = errorOffset;
+        Error = error;
+    }
+
+    public uint ErrorOffset { get; }
+    public QueryError Error { get; }
+}

@@ -68,3 +68,12 @@ There are no build automations yet. This is how I've been setting up the project
 4. dotnet build and dotnet run SampleProject.
 
 If you decide to implement a class for another language using this repo as a starting point, you will have to follow the same steps.
+
+## TODOs
+
+- Check dispose pattern for all classes
+- Create tests
+- Automate build
+    - Include make on submodules and extract libraries
+- Dockerize and document. This will be easier than providing support for all platforms.
+- Document that Language in C is effectively a singleton and copy and delete are implemented only for the sake of compatibility with the library.

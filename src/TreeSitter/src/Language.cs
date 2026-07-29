@@ -46,9 +46,7 @@ public abstract class Language : IDisposable
             // Dispose managed resources if any.
         }
 
-        // Dispose unmanaged resources.
         Binding.ts_language_delete(_pointer);
-        _pointer = IntPtr.Zero;
         _disposed = true;
     }
 

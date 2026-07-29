@@ -2,7 +2,7 @@ namespace TreeSitter;
 
 public sealed class Parser : IDisposable
 {
-    private IntPtr _pointer;
+    private readonly IntPtr _pointer;
     private readonly Language _language;
     private bool _disposed = false;
     private Binding.LogCallback? _logCallbackKeepAliveRef;
@@ -50,7 +50,6 @@ public sealed class Parser : IDisposable
 
         Binding.ts_parser_set_logger(_pointer, new Binding.LoggerData { Log = IntPtr.Zero});
         Binding.ts_parser_delete(_pointer);
-        _pointer = IntPtr.Zero;
         _disposed = true;
     }
 

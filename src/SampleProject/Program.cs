@@ -54,11 +54,13 @@ public class Program
         Console.WriteLine($"S-Expression: '{rootNode.ToString()}'.");
 
         using var query = lang.CreateQuery("(pair key: (string) @key value: (number) @value)");
+        using var queryCursor = query.CreateCursor();
+        queryCursor.Exec(rootNode);
 
-        var captures = query.Captures(rootNode).ToList();
-        for (int i = 0; i < captures.Count; i++)
+        while (queryCursor.NextCapture() is {} capture)
         {
-            Console.WriteLine($"Capture {query.CaptureNameForId(captures[i].Index)} at {i}: {captures[i].Node.Text(source)}, '{captures[i].Node.Type()}'");
+            Console.WriteLine($"Capture {query.CaptureNameForId(capture.Index)} at {capture.Index}: {capture.Node.Text(source)}, '{capture.Node.Type()}'");
         }
+
     }
 }

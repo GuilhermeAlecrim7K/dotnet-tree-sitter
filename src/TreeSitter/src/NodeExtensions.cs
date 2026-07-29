@@ -16,6 +16,7 @@ public static class NodeExtensions
         }
     }
 
+    /**
     public static IEnumerable<Node> ChildrenByFieldName(this Node node, string fieldName)
     {
         var fieldId = node.Tree.Language.FieldId(fieldName);
@@ -34,4 +35,5 @@ public static class NodeExtensions
             ok = cursor.GotoNextSibling();
         }
     }
+    */
 }

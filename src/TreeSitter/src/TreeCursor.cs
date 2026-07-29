@@ -2,48 +2,107 @@ namespace TreeSitter;
 
 public sealed class TreeCursor : IDisposable
 {
-    bool _disposed;
-    internal Binding.TreeCursor NativeCursor;
+    private bool _disposed = false;
+    private Binding.TreeCursor NativeCursor;
 
-    public Tree Tree { get; }
-
-    internal TreeCursor(Binding.TreeCursor cursor, Language language, Tree tree)
+    internal TreeCursor(Binding.TreeCursor cursor)
     {
         NativeCursor = cursor;
-        Tree = tree;
     }
 
     public TreeCursor(Node node)
     {
-        Tree = node.Tree;
         NativeCursor = Binding.ts_tree_cursor_new(node.NativeNode);
+    }
+
+    ~TreeCursor()
+    {
+        Dispose(false);
     }
 
     public void Dispose()
     {
-        if (!_disposed)
-        {
-            Binding.ts_tree_cursor_delete(ref NativeCursor);
-            _disposed = true;
-        }
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
 
-    public void Reset(Node node) => Binding.ts_tree_cursor_reset(ref NativeCursor, node.NativeNode);
-    public Node CurrentNode() => new (Binding.ts_tree_cursor_current_node(ref NativeCursor), Tree);
+    private void Dispose(bool disposing)
+    {
+        if (_disposed)
+            return;
 
-    public string? CurrentField() => Tree.Language.FieldName(Binding.ts_tree_cursor_current_field_id(ref NativeCursor));
+        if (disposing)
+        {
+            // Dispose managed resources if any.
+        }
 
-    public string? CurrentSymbol() => Tree.Language.SymbolName(Binding.ts_node_symbol(Binding.ts_tree_cursor_current_node(ref NativeCursor)));
+        Binding.ts_tree_cursor_delete(ref NativeCursor);
+        _disposed = true;
+    }
 
-    public bool GotoParent() => Binding.ts_tree_cursor_goto_parent(ref NativeCursor);
+    private void ThrowIfDisposed()
+    {
+        if (_disposed)
+            throw new ObjectDisposedException(nameof(TreeCursor));
+    }
 
-    public bool GotoNextSibling() => Binding.ts_tree_cursor_goto_next_sibling(ref NativeCursor);
+    public void Reset(Node node)
+    {
+        ThrowIfDisposed();
+        Binding.ts_tree_cursor_reset(ref NativeCursor, node.NativeNode);
+    }
 
-    public bool GotoFirstChild() => Binding.ts_tree_cursor_goto_first_child(ref NativeCursor);
+    public Node CurrentNode()
+    {
+        ThrowIfDisposed();
+        return new(Binding.ts_tree_cursor_current_node(ref NativeCursor));
+    }
 
-    public long GotoFirstChildForOffset(uint offset) => Binding.ts_tree_cursor_goto_first_child_for_byte(ref NativeCursor, offset * sizeof(ushort));
+    public ushort CurrentFieldId()
+    {
+        ThrowIfDisposed();
+        return Binding.ts_tree_cursor_current_field_id(ref NativeCursor);
+    }
 
-    public long GotoFirstChildForPoint(Point point) => Binding.ts_tree_cursor_goto_first_child_for_point(ref NativeCursor, point);
+    public ushort CurrentSymbol()
+    {
+        ThrowIfDisposed();
+        return Binding.ts_node_symbol(Binding.ts_tree_cursor_current_node(ref NativeCursor));
+    }
 
-    public TreeCursor Copy() => new(Binding.ts_tree_cursor_copy(ref NativeCursor), Tree.Language, Tree);
+    public bool GotoParent()
+    {
+        ThrowIfDisposed();
+        return Binding.ts_tree_cursor_goto_parent(ref NativeCursor);
+    }
+
+    public bool GotoNextSibling()
+    {
+        ThrowIfDisposed();
+        return Binding.ts_tree_cursor_goto_next_sibling(ref NativeCursor);
+    }
+
+    public bool GotoFirstChild()
+    {
+        ThrowIfDisposed();
+        return Binding.ts_tree_cursor_goto_first_child(ref NativeCursor);
+    }
+
+    public long GotoFirstChildForOffset(uint offset)
+    {
+        ThrowIfDisposed();
+        return Binding.ts_tree_cursor_goto_first_child_for_byte(ref NativeCursor, offset * sizeof(ushort));
+    }
+
+    public long GotoFirstChildForPoint(Point point)
+    {
+        ThrowIfDisposed();
+        return Binding.ts_tree_cursor_goto_first_child_for_point(ref NativeCursor, point);
+    }
+
+    public TreeCursor Copy()
+    {
+        ThrowIfDisposed();
+        return new(Binding.ts_tree_cursor_copy(ref NativeCursor));
+    }
 }

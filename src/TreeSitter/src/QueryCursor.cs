@@ -4,51 +4,99 @@ namespace TreeSitter;
 
 public sealed class QueryCursor : IDisposable
 {
-    internal IntPtr Ptr;
-    internal readonly Query Query;
+    private readonly IntPtr _pointer;
+    private readonly Query _query;
+    private bool _disposed = false;
 
-    public Tree Tree { get; }
-    
-    internal QueryCursor(Query query, Tree tree)
+    internal QueryCursor(Query query)
     {
-        Tree = tree;
-        Query = query;
-        Ptr = Binding.ts_query_cursor_new();
+        _pointer = Binding.ts_query_cursor_new();
+        _query = query;
+    }
+
+    ~QueryCursor()
+    {
+        Dispose(false);
     }
 
     public void Dispose()
     {
-        if (Ptr != IntPtr.Zero)
-        {
-            Binding.ts_query_cursor_delete(Ptr);
-            Ptr = IntPtr.Zero;
-        }
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
 
-    public bool DidExceedMatchLimit() => Binding.ts_query_cursor_did_exceed_match_limit(Ptr);
+    private void Dispose(bool disposing)
+    {
+        if (_disposed)
+            return;
 
-    public uint MatchLimit() => Binding.ts_query_cursor_match_limit(Ptr);
+        if (disposing)
+        {
+            // Dispose managed resources if any.
+        }
 
-    public void SetMatchLimit(uint limit) => Binding.ts_query_cursor_set_match_limit(Ptr, limit);
+        Binding.ts_query_cursor_delete(_pointer);
+        _disposed = true;
+    }
 
-    public void SetRange(uint start, uint end) => Binding.ts_query_cursor_set_byte_range(Ptr, start * sizeof(ushort), end * sizeof(ushort));
+    private void ThrowIfDisposed()
+    {
+        if (_disposed)
+            throw new ObjectDisposedException(nameof(QueryCursor));
+    }
 
-    public void SetPointRange(Point start, Point end) => Binding.ts_query_cursor_set_point_range(Ptr, start, end);
+    public void Exec(Node node)
+    {
+        ThrowIfDisposed();
+        Binding.ts_query_cursor_exec(_pointer, _query.Pointer, node.NativeNode);
+    }
+
+    public bool DidExceedMatchLimit()
+    {
+        ThrowIfDisposed();
+        return Binding.ts_query_cursor_did_exceed_match_limit(_pointer);
+    }
+
+    public uint MatchLimit()
+    {
+        ThrowIfDisposed();
+        return Binding.ts_query_cursor_match_limit(_pointer);
+    }
+
+    public void SetMatchLimit(uint limit)
+    {
+        ThrowIfDisposed();
+        Binding.ts_query_cursor_set_match_limit(_pointer, limit);
+    }
+
+    public void SetByteRange(uint startByte, uint endByte)
+    {
+        ThrowIfDisposed();
+        Binding.ts_query_cursor_set_byte_range(_pointer, startByte * sizeof(ushort), endByte * sizeof(ushort));
+    }
+
+    public void SetPointRange(Point start, Point end)
+    {
+        ThrowIfDisposed();
+        Binding.ts_query_cursor_set_point_range(_pointer, start, end);
+    }
 
     public QueryMatch? NextMatch()
     {
-        if (!Binding.ts_query_cursor_next_match(Ptr, out var nativeMatch))
+        ThrowIfDisposed();
+        if (!Binding.ts_query_cursor_next_match(_pointer, out var nativeMatch))
             return null;
 
         var match = new QueryMatch(nativeMatch.PatternIndex, new QueryCapture[nativeMatch.CaptureCount]);
-        
+
         for (var n = 0; n < nativeMatch.CaptureCount; n++)
         {
             var intPtr = nativeMatch.Captures + Marshal.SizeOf(typeof(Binding.QueryCapture)) * n;
             var nativeCapture = Marshal.PtrToStructure<Binding.QueryCapture>(intPtr);
 
-            var node = Node.FromNative(nativeCapture.Node, Tree);
-            if (node is null) throw new InvalidOperationException("Failed to retrieve node for capture.");
+            var node = Node.FromNative(nativeCapture.Node);
+            if (node is null)
+                throw new InvalidOperationException("Failed to retrieve node for capture.");
 
             match.Captures[n] = new QueryCapture(nativeCapture.Index, node);
         }
@@ -56,20 +104,24 @@ public sealed class QueryCursor : IDisposable
         return match;
     }
 
-    public void RemoveMatch(uint id) => Binding.ts_query_cursor_remove_match(Ptr, id);
+    public void RemoveMatch(uint id)
+    {
+        ThrowIfDisposed();
+        Binding.ts_query_cursor_remove_match(_pointer, id);
+    }
 
     public QueryCapture? NextCapture()
     {
-        if (!Binding.ts_query_cursor_next_capture(Ptr, out var nativeMatch, out var captureIndex))
+        ThrowIfDisposed();
+        if (!Binding.ts_query_cursor_next_capture(_pointer, out var nativeMatch, out var captureIndex))
             return null;
 
         var intPtr = nativeMatch.Captures + Marshal.SizeOf(typeof(Binding.QueryCapture)) * (ushort)captureIndex;
         var nativeCapture = Marshal.PtrToStructure<Binding.QueryCapture>(intPtr);
-        var node = Node.FromNative(nativeCapture.Node, Tree);
+        var node = Node.FromNative(nativeCapture.Node);
         if (node is null)
             throw new InvalidOperationException("Failed to retrieve node for capture.");
 
         return new QueryCapture(nativeCapture.Index, node);
     }
-
 }
