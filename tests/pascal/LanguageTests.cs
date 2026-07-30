@@ -35,17 +35,20 @@ public class LanguageTests
     }
 
     [Test]
-    public void Name_WithPascalLanguage_ShouldReturnPascal()
+    // ts_language_name returns null below ABI 15 (LANGUAGE_VERSION_WITH_RESERVED_WORDS);
+    // the pinned tree-sitter-pascal commit is ABI 14. Revisit if the grammar is regenerated at ABI 15.
+    public void Name_WithPascalLanguage_ShouldReturnNull()
     {
         using var sut = new PascalLanguage();
-        Assert.That(sut.Name(), Is.EqualTo("pascal"));
+        Assert.That(sut.Name(), Is.Null);
     }
 
     [Test]
+    // The pinned tree-sitter-pascal commit is generated at ABI 14. Revisit if the grammar is regenerated at ABI 15.
     public void AbiVersion_WithPascalLanguage_ShouldReturnExpectedValue()
     {
         using var sut = new PascalLanguage();
-        Assert.That(sut.AbiVersion(), Is.EqualTo(15));
+        Assert.That(sut.AbiVersion(), Is.EqualTo(14));
     }
 
     [Test]
@@ -118,8 +121,9 @@ public class LanguageTests
         Assert.That(sut.FieldName(0), Is.Null, "Field id 0 should be null.");
         Assert.That(sut.FieldName(ushort.MaxValue), Is.Null, "Field id ushort.MaxValue should be null.");
 
+        // The pinned tree-sitter-pascal commit is generated at ABI 14. Revisit if the grammar is regenerated at ABI 15.
         var fieldCount = sut.FieldCount();
-        Assert.That(fieldCount, Is.EqualTo(36), "Field count should be 36 for Pascal language.");
+        Assert.That(fieldCount, Is.EqualTo(38), "Field count should be 38 for Pascal language.");
 
         Assert.Multiple(() =>
         {
@@ -152,10 +156,11 @@ public class LanguageTests
     }
 
     [Test]
+    // The pinned tree-sitter-pascal commit is generated at ABI 14. Revisit if the grammar is regenerated at ABI 15.
     public void StateCount_WithPascalLanguage_ShouldReturnExpectedValue()
     {
         using var sut = new PascalLanguage();
-        Assert.That(sut.StateCount(), Is.EqualTo(2105), "State count should be 2105 for Pascal language.");
+        Assert.That(sut.StateCount(), Is.EqualTo(2715), "State count should be 2715 for Pascal language.");
     }
 
     [Test]

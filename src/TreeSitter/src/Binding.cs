@@ -52,9 +52,10 @@ internal static partial class Binding
         public IntPtr Captures;
     }
 
-    [LibraryImport("tree-sitter")]
-    [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
-    public static partial void free(IntPtr str);
+    // tree-sitter's default allocator is the CRT malloc/free (lib/src/alloc.c), and
+    // libtree-sitter does not re-export `free` itself, so it cannot be P/Invoked from
+    // the native library. NativeMemory.Free is the portable equivalent of CRT free.
+    public static unsafe void free(IntPtr str) => NativeMemory.Free((void*)str);
 
     /********************/
     /* Section - Parser */
