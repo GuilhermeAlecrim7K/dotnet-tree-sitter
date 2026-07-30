@@ -1,68 +1,66 @@
 namespace TreeSitter.Pascal.Tests;
 
-public class NodeTests
+public class NodeTests : PascalTestFixture
 {
-    private PascalLanguage _language = null!;
-    private Parser _parser = null!;
-
-    private const string SAMPLE_SOURCE = "program HelloWorld; begin end.";
-    private const string SAMPLE_SOURCE_S_EXPRESSION = "(root (program (kProgram) (moduleName (identifier)) (block (kBegin) (kEnd)) (kEndDot)))";
-
-    [SetUp]
-    public void SetUp()
-    {
-        _language = new PascalLanguage();
-        _parser = _language.CreateParser();
-    }
-
-    [TearDown]
-    public void TearDown()
-    {
-        _parser.Dispose();
-        _language.Dispose();
-    }
-
     [Test]
     public void ToString_WithValidNode_ShouldReturnSExpression()
     {
-        using var tree = _parser.ParseString(SAMPLE_SOURCE);
+        using var tree = Parser.ParseString(PascalGrammar.SAMPLE_PROGRAM);
         var rootNode = tree.RootNode();
-        var sExpression = rootNode.ToString();
-        Assert.That(sExpression, Is.EqualTo(SAMPLE_SOURCE_S_EXPRESSION), "The S-Expression of the root node should match the expected structure for the given source code.");
+        Assert.That(rootNode.ToString(), Is.EqualTo(PascalGrammar.SAMPLE_PROGRAM_S_EXPRESSION), "The S-Expression of the root node should match the expected structure for the given source code.");
     }
 
-    [Test]
-    public void TypeAndCount_WithSampleSource_ShouldReturnExpectedValues()
+    [TestCaseSource(nameof(NodeShapes))]
+    public void TypeAndCount_ForNodeAtPath_ShouldReturnExpectedValues(string childPath, string expectedType, uint expectedChildCount, uint expectedNamedChildCount)
     {
-        using var tree = _parser.ParseString(SAMPLE_SOURCE);
-        var rootNode = tree.RootNode();
-        // NOTE: Refer to the S-Expression in the SAMPLE_SOURCE_S_EXPRESSION constant for the expected structure of the parse tree. The assertions below are based on that structure.
-        var runNodeAssertions = (Node? node, string expectedType, uint expectedChildCount, uint expectedNamedChildCount) =>
-        {
-            if (node is null)
-            {
-                Assert.Fail($"Node '{expectedType}' should not be null.");
-                return;
-            }
-            Assert.Multiple(() =>
-            {
-                Assert.That(node.Type(), Is.EqualTo(expectedType), $"Type mismatch for.");
-                Assert.That(node.ChildCount(), Is.EqualTo(expectedChildCount), $"ChildCount mismatch for '{expectedType}'.");
-                Assert.That(node.NamedChildCount(), Is.EqualTo(expectedNamedChildCount), $"NamedChildCount mismatch for '{expectedType}'.");
-            });
-        };
+        using var tree = Parser.ParseString(PascalGrammar.SAMPLE_PROGRAM);
+        var node = NodeAt(tree.RootNode(), childPath);
+        Assert.That(node, Is.Not.Null, $"Node at path '{childPath}' should not be null.");
 
-        runNodeAssertions(rootNode, "root", 1, 1);
-        var node = rootNode.Child(0);
-        runNodeAssertions(node, "program", 5, 4);
-        runNodeAssertions(node?.Child(0), "kProgram", 0, 0);
-        runNodeAssertions(node?.Child(1), "moduleName", 1, 1);
-        runNodeAssertions(node?.Child(1)?.Child(0), "identifier", 0, 0);
-        runNodeAssertions(node?.Child(2), ";", 0, 0);
-        runNodeAssertions(node?.Child(3), "block", 2, 2);
-        runNodeAssertions(node?.Child(3)?.Child(0), "kBegin", 0, 0);
-        runNodeAssertions(node?.Child(3)?.Child(1), "kEnd", 0, 0);
-        runNodeAssertions(node?.Child(4), "kEndDot", 1, 0);
-        runNodeAssertions(node?.Child(4)?.Child(0), ".", 0, 0);
+        Assert.Multiple(() =>
+        {
+            Assert.That(node!.Type(), Is.EqualTo(expectedType), $"Type mismatch at path '{childPath}'.");
+            Assert.That(node!.ChildCount(), Is.EqualTo(expectedChildCount), $"ChildCount mismatch for '{expectedType}'.");
+            Assert.That(node!.NamedChildCount(), Is.EqualTo(expectedNamedChildCount), $"NamedChildCount mismatch for '{expectedType}'.");
+        });
+    }
+
+    /// <summary>
+    /// One case per node of <see cref="PascalGrammar.SAMPLE_PROGRAM"/>'s parse tree:
+    /// child path, expected type, expected child count, expected named-child count.
+    /// The path is a '.'-separated list of child indices from the root; "" is the root itself.
+    /// Mirrors <see cref="PascalGrammar.SAMPLE_PROGRAM_S_EXPRESSION"/>.
+    /// </summary>
+    private static IEnumerable<TestCaseData> NodeShapes()
+    {
+        yield return Shape("", "root", 1, 1);
+        yield return Shape("0", "program", 5, 4);
+        yield return Shape("0.0", "kProgram", 0, 0);
+        yield return Shape("0.1", "moduleName", 1, 1);
+        yield return Shape("0.1.0", "identifier", 0, 0);
+        yield return Shape("0.2", ";", 0, 0);
+        yield return Shape("0.3", "block", 2, 2);
+        yield return Shape("0.3.0", "kBegin", 0, 0);
+        yield return Shape("0.3.1", "kEnd", 0, 0);
+        yield return Shape("0.4", "kEndDot", 1, 0);
+        yield return Shape("0.4.0", ".", 0, 0);
+    }
+
+    // SetArgDisplayNames keeps the case names readable: NUnit would otherwise render 0u as
+    // "uint.MinValue" and the path of the root node as an empty string.
+    private static TestCaseData Shape(string childPath, string expectedType, uint childCount, uint namedChildCount) =>
+        new TestCaseData(childPath, expectedType, childCount, namedChildCount)
+            .SetArgDisplayNames(childPath.Length == 0 ? "root" : childPath, expectedType, childCount.ToString(), namedChildCount.ToString());
+
+    private static Node? NodeAt(Node root, string childPath)
+    {
+        if (childPath.Length == 0)
+            return root;
+
+        Node? node = root;
+        foreach (var index in childPath.Split('.'))
+            node = node?.Child(uint.Parse(index));
+
+        return node;
     }
 }
