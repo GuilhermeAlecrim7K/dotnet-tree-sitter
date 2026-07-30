@@ -15,7 +15,9 @@ public sealed class Node
 
     public ushort Symbol() => Binding.ts_node_symbol(NativeNode);
 
-    public string GrammarSymbol() => Marshal.PtrToStringAnsi(Binding.ts_node_grammar_symbol(NativeNode)) ?? "";
+    public ushort GrammarSymbol() => Binding.ts_node_grammar_symbol(NativeNode);
+
+    public string GrammarType() => Marshal.PtrToStringUTF8(Binding.ts_node_grammar_type(NativeNode)) ?? "";
 
     public uint StartByteOffset() => Binding.ts_node_start_byte(NativeNode) / sizeof(ushort);
 

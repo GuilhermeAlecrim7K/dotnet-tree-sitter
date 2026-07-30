@@ -25,6 +25,35 @@ public class NodeTests : PascalTestFixture
         });
     }
 
+    [Test]
+    public void GrammarSymbol_OnNamedNode_ReturnsNonZeroId()
+    {
+        using var tree = Parser.ParseString(PascalGrammar.SAMPLE_PROGRAM);
+        var programNode = tree.RootNode().Child(0);
+        Assert.That(programNode, Is.Not.Null, "The 'program' node should not be null.");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(programNode!.GrammarSymbol(), Is.Not.Zero, "GrammarSymbol should return a valid (non-zero) symbol id.");
+            // For a non-aliased/non-supertype node the grammar symbol coincides with the public symbol.
+            Assert.That(programNode!.GrammarSymbol(), Is.EqualTo(programNode!.Symbol()), "GrammarSymbol should match Symbol for a non-aliased node.");
+        });
+    }
+
+    [Test]
+    public void GrammarType_OnNamedNode_ReturnsExpectedString()
+    {
+        using var tree = Parser.ParseString(PascalGrammar.SAMPLE_PROGRAM);
+        var programNode = tree.RootNode().Child(0);
+        Assert.That(programNode, Is.Not.Null, "The 'program' node should not be null.");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(programNode!.GrammarType(), Is.Not.Empty, "GrammarType should return a non-empty string.");
+            Assert.That(programNode!.GrammarType(), Is.EqualTo("program"), "GrammarType should report the grammar type name for the node.");
+        });
+    }
+
     /// <summary>
     /// One case per node of <see cref="PascalGrammar.SAMPLE_PROGRAM"/>'s parse tree:
     /// child path, expected type, expected child count, expected named-child count.
