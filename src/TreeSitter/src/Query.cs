@@ -120,7 +120,7 @@ public sealed class Query : IDisposable
     public string? CaptureNameForId(uint id)
     {
         ThrowIfDisposed();
-        return Marshal.PtrToStringAnsi(Binding.ts_query_capture_name_for_id(_pointer, id, out _));
+        return Marshal.PtrToStringUTF8(Binding.ts_query_capture_name_for_id(_pointer, id, out _));
     }
 
     public Quantifier CaptureQuantifierForId(uint patternId, uint captureId)
@@ -132,7 +132,7 @@ public sealed class Query : IDisposable
     public string? StringValueForId(uint id)
     {
         ThrowIfDisposed();
-        return Marshal.PtrToStringAnsi(Binding.ts_query_string_value_for_id(_pointer, id, out _));
+        return Marshal.PtrToStringUTF8(Binding.ts_query_string_value_for_id(_pointer, id, out _));
     }
 
     public void DisableCapture(string captureName)

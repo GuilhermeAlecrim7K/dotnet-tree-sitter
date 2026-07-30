@@ -54,6 +54,18 @@ public class NodeTests : PascalTestFixture
         });
     }
 
+    [Test]
+    public void Text_WithNonAsciiSource_ShouldPreserveCharacters()
+    {
+        using var tree = Parser.ParseString(PascalGrammar.NON_ASCII_PROGRAM);
+
+        // The root spans the whole document from offset 0, so Text returns the source
+        // (up to the last token) regardless of how the grammar lexes "Café". This guards
+        // the byte / sizeof(ushort) char-offset math for BMP non-ASCII: each such char is
+        // one UTF-16 code unit (2 bytes), so char indices stay aligned.
+        Assert.That(tree.RootNode().Text(PascalGrammar.NON_ASCII_PROGRAM), Does.Contain("Café"), "Char-offset slicing over a UTF-16 document must preserve BMP non-ASCII characters.");
+    }
+
     /// <summary>
     /// One case per node of <see cref="PascalGrammar.SAMPLE_PROGRAM"/>'s parse tree:
     /// child path, expected type, expected child count, expected named-child count.

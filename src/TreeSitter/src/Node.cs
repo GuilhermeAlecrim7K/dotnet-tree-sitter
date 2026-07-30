@@ -11,7 +11,7 @@ public sealed class Node
         NativeNode = nativeNode;
     }
 
-    public string Type() => Marshal.PtrToStringAnsi(Binding.ts_node_type(NativeNode)) ?? "";
+    public string Type() => Marshal.PtrToStringUTF8(Binding.ts_node_type(NativeNode)) ?? "";
 
     public ushort Symbol() => Binding.ts_node_symbol(NativeNode);
 
@@ -38,7 +38,7 @@ public sealed class Node
     public override string ToString()
     {
         var memAllocatedString = Binding.ts_node_string(NativeNode);
-        var result = Marshal.PtrToStringAnsi(memAllocatedString) ?? "";
+        var result = Marshal.PtrToStringUTF8(memAllocatedString) ?? "";
         Binding.ts_node_string_free(memAllocatedString);
         return result;
     }
@@ -59,9 +59,9 @@ public sealed class Node
 
     public Node? Child(uint index) => FromNative(Binding.ts_node_child(NativeNode, index));
 
-    public string? FieldNameForChild(uint index) => Marshal.PtrToStringAnsi(Binding.ts_node_field_name_for_child(NativeNode, index));
+    public string? FieldNameForChild(uint index) => Marshal.PtrToStringUTF8(Binding.ts_node_field_name_for_child(NativeNode, index));
 
-    public string? FieldNameForNamedChild(uint index) => Marshal.PtrToStringAnsi(Binding.ts_node_field_name_for_named_child(NativeNode, index));
+    public string? FieldNameForNamedChild(uint index) => Marshal.PtrToStringUTF8(Binding.ts_node_field_name_for_named_child(NativeNode, index));
 
     public uint ChildCount() => Binding.ts_node_child_count(NativeNode);
 
