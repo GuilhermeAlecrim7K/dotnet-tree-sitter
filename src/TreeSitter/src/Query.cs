@@ -22,8 +22,10 @@ public sealed class Query : IDisposable
         _source = source;
         _pointer = Binding.ts_query_new(languagePointer, source, (uint)System.Text.Encoding.UTF8.GetByteCount(source), out var errorOffset, out var errorType);
 
+        // NOTE: errorOffset is a UTF-8 byte offset into the query source (marshaled
+        // with LPUTF8Str), not a UTF-16 document offset — do not divide by sizeof(ushort).
         if (_pointer == IntPtr.Zero)
-            throw new QueryException(errorOffset / sizeof(ushort), errorType);
+            throw new QueryException(errorOffset, errorType);
     }
 
     ~Query()
@@ -81,16 +83,19 @@ public sealed class Query : IDisposable
         return Binding.ts_query_string_count(_pointer);
     }
 
+    // NOTE: returns a UTF-8 byte offset into the query source, not a UTF-16 document
+    // offset — the query source is marshaled with LPUTF8Str, so no /sizeof(ushort).
     public uint StartByteOffsetForPattern(uint patternIndex)
     {
         ThrowIfDisposed();
-        return Binding.ts_query_start_byte_for_pattern(_pointer, patternIndex) / sizeof(ushort);
+        return Binding.ts_query_start_byte_for_pattern(_pointer, patternIndex);
     }
 
+    // NOTE: UTF-8 byte offset into the query source (see StartByteOffsetForPattern).
     public uint EndByteOffsetForPattern(uint patternIndex)
     {
         ThrowIfDisposed();
-        return Binding.ts_query_end_byte_for_pattern(_pointer, patternIndex) / sizeof(ushort);
+        return Binding.ts_query_end_byte_for_pattern(_pointer, patternIndex);
     }
 
     public QueryPredicateStep[] PredicatesForPattern(uint patternIndex)
@@ -111,10 +116,12 @@ public sealed class Query : IDisposable
         return Binding.ts_query_is_pattern_non_local(_pointer, patternIndex);
     }
 
+    // NOTE: offset is a UTF-8 byte offset into the query source, not a UTF-16 document
+    // offset — pass it through unchanged (no /sizeof(ushort)).
     public bool IsPatternGuaranteedAtOffset(uint offset)
     {
         ThrowIfDisposed();
-        return Binding.ts_query_is_pattern_guaranteed_at_step(_pointer, offset / sizeof(ushort));
+        return Binding.ts_query_is_pattern_guaranteed_at_step(_pointer, offset);
     }
 
     public string? CaptureNameForId(uint id)

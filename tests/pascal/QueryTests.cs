@@ -27,4 +27,44 @@ public class QueryTests : PascalTestFixture
         using var query = Language.CreateQuery("(identifier) @id");
         Assert.That(query.CaptureNameForId(0), Is.EqualTo("id"));
     }
+
+    // Query-source offsets are UTF-8 byte offsets, NOT document UTF-16 offsets: the
+    // source is marshaled with LPUTF8Str. Dividing by sizeof(ushort) halves them.
+    [Test]
+    public void StartAndEndByteOffsetForPattern_ShouldReturnUtf8ByteOffsets()
+    {
+        // Two patterns; ASCII so byte offset == char index. Pattern 1 starts at the
+        // second "(identifier)". Under the /2 bug Start(1) would be ~8 instead of 16.
+        const string source = "(identifier) @a (identifier) @b";
+        using var query = Language.CreateQuery(source);
+
+        var pattern1Start = (uint)source.IndexOf("(identifier)", 1); // 16
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(query.StartByteOffsetForPattern(0), Is.EqualTo(0u),
+                "Pattern 0 starts at byte 0.");
+            Assert.That(query.StartByteOffsetForPattern(1), Is.EqualTo(pattern1Start),
+                "Pattern 1 start must be its true UTF-8 byte offset, not the halved value.");
+            Assert.That(query.EndByteOffsetForPattern(1), Is.EqualTo((uint)source.Length),
+                "Pattern 1 ends at the end of the source; the /2 bug would halve this.");
+        });
+    }
+
+    // A malformed query must report the error at the true UTF-8 byte offset of the
+    // bad node type, not half of it.
+    [Test]
+    public void CreateQuery_WithInvalidNodeType_ErrorOffsetPointsAtBadToken()
+    {
+        const string source = "(identifier) @ok (nonexistent_node) @bad";
+        var badTokenOffset = (uint)source.IndexOf("nonexistent_node"); // 18
+
+        var ex = Assert.Throws<QueryException>(() => Language.CreateQuery(source));
+
+        // tree-sitter anchors a NodeType error at the start of the offending name.
+        // The /2 bug halves the byte offset to 9, pointing into the wrong pattern.
+        Assert.That(ex!.ErrorOffset, Is.EqualTo(badTokenOffset),
+            "ErrorOffset must be the true UTF-8 byte offset of the error, not the halved value.");
+        Assert.That(ex.Error, Is.EqualTo(QueryError.QueryErrorNodeType));
+    }
 }
