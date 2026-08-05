@@ -73,6 +73,7 @@ If you decide to implement a class for another language using this repo as a sta
 
 - Check dispose pattern for all classes
 - Create tests
+    - Un-ignore `LanguageTests.SymbolName_ForEverySymbolId_ShouldRoundTripThroughSymbol` once the symbol model (named vs anonymous lookup, the id-0 sentinel, alias/supertype ids) is understood well enough for the round-trip to hold
 - Automate build
     - Include make on submodules and extract libraries
 - Dockerize and document. This will be easier than providing support for all platforms.
