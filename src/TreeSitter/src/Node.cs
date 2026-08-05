@@ -2,6 +2,28 @@ using System.Runtime.InteropServices;
 
 namespace TreeSitter;
 
+/// <summary>
+/// A syntax node within a parsed <see cref="Tree"/>. Nodes are lightweight,
+/// immutable handles into their originating tree.
+/// </summary>
+/// <remarks>
+/// <para>
+/// A node is valid only while the <see cref="Tree"/> it was obtained from is alive.
+/// The caller must keep that <see cref="Tree"/> referenced for as long as the node —
+/// or any node reached from it by traversal or by a query capture — is still in use.
+/// </para>
+/// <para>
+/// Disposing the originating <see cref="Tree"/>, or dropping its last reference so
+/// its finalizer runs, releases the underlying native tree and invalidates every
+/// node derived from it. Calling any member on an invalidated node is undefined
+/// behavior and may corrupt memory or crash the process.
+/// </para>
+/// <para>
+/// This contract is not yet enforced structurally — correctness currently depends on
+/// the caller retaining the <see cref="Tree"/>. A future release is expected to make
+/// access after tree disposal fail deterministically instead.
+/// </para>
+/// </remarks>
 public sealed class Node
 {
     internal readonly Binding.Node NativeNode;
